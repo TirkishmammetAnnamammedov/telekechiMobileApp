@@ -1,0 +1,568 @@
+proyekti gurnamak uchin ilki bilen kompyuterde python gurmaly.
+Son requirements.txt ichindaki modullary yuklemeli.
+terminaly requirements.txt duran yerde achmaly:
+
+    --> pip3 install -r requirements.txt <--
+
+Son terminalda manage.py duran yerinde:
+
+    --> python3 manage.py migrate <--
+
+    --> python3 manage.py createsuperuser <--
+
+ulanyjy at we parol yazyan sonra admin paneli achmak ucin browserda:
+                                                                                    
+    --> http://localhost:8000/admin <--                                             
+                                                                                    
+------------------------------------------------------------------------------------
+API lerin hemmesi urls.py ichinde.
+
+API lerin hemmesine datany json formatda ugratmaly, suratlary file edip ugratmaly.
+
+Register API:
+
+    --> http:127.0.0.1:8000/api/register <--
+
+    meselem:
+    method: POST
+    
+    {
+        "phone_number": "+9936xxxxxxx"
+        "password": "userspassword"     # min length 6
+    }
+
+ulanyjy doredilenden son admin panelden ulanyjyny is_active=True, is_staff=True etmeli sonra ulanyjy active bolyar.
+--------------------------------------------------------------------------------------------------
+Login API:
+
+    --> http:127.0.0.1:8000/api/login <--
+
+    meselem:
+    method: POST
+
+    {
+        "phone_number": "+9936xxxxxxx"
+        "password": "userspassword"      
+    }
+
+eger ulanyjy admin panelde is_active ve is_staff True bolsa login bolya, eger bolmasa token doredilya yone active dal
+------------------------------------------------------------------------------------------------------
+Get profile data API:
+
+   --> http://127.0.0.1:8000/api/getprofiledata/${ulanyjy id} <--
+
+   meselem:
+   method: GET
+   header: Token 46d72f1ff348c6f94385c9db91e78d97f40bc57b # ulanyjyn tokeni.
+
+   netije:
+
+   {
+    "id": 8,
+    "phone_number": "+99361418884"
+   }
+
+   netijede sho id daki userin telefon belgisi bilen id si gelya (token we parol gelmez yaly etdim)
+--------------------------------------------------------------------------------------------------------
+Delete profile data API:
+
+   --> http://127.0.0.1:8000/api/deleteprofile/${ulanyjy id} <--
+
+   meselem:
+   method: DELETE
+   header: Token 46d72f1ff348c6f94385c9db91e78d97f40bc57b # ulanyjyn tokeni.
+
+   netije:
+    STATUS: 204 NO CONTENT
+    status message:
+
+   {
+      "SUCCESS": "profile +9936xxxxxxx deleted successfully."
+   }
+
+   netijede sho id daki user pozulya (sonun gosan harytlary we tokeni bilen bile)
+---------------------------------------------------------------------------------------------------------
+Get Banners API:
+
+       --> http://127.0.0.1:8000/api/banners <--
+
+   meselem:
+   method: GET
+
+   netije:
+
+
+    [
+        {
+            "id": 1,
+            "image": "http://127.0.0.1:8000/media/banners/img-001.gif"
+        },
+        {
+            "id": 2,
+            "image": "http://127.0.0.1:8000/media/banners/img-002.gif"
+        }
+    ]
+   admin panelden goshulan bannerlerin linki gelya. Register bolmadyk ulanyjylar hem gorer yaly bu apide token goymadym.
+-------------------------------------------------------------------------------------------------------------
+Get all categories API:
+
+       --> http://127.0.0.1:8000/api/allcategories <--
+
+   meselem:
+   method: GET
+
+   netije:
+
+    [
+        {
+            "id": 1,
+            "category_name": "Miweler",
+            "category_image": "http://127.0.0.1:8000/media/category/img-001.jpg",
+            "joined_date": "2023-04-09"
+        }
+    ]
+   admin panelden goshulan kategoriyalaryn spisogy gelya. Register bolmadyk ulanyjylar hem gorer yaly bu apide token goymadym.
+------------------------------------------------------------------------------------------------------------------
+Get all products API:
+
+       --> http://127.0.0.1:8000/api/allproducts <--
+
+   meselem:
+   method: GET
+
+   netije:
+
+{
+  "count": 11,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": 10,
+      "product_name": "mandarin",
+      "product_price": "100.20",
+      "product_image": "http://127.0.0.1:8000/media/product/img-001.jpg",
+      "product_image2": null,
+      "product_image3": null,
+      "product_image4": null,
+      "product_image5": null,
+      "product_image6": null,
+      "product_image7": null,
+      "product_image8": null,
+      "product_address": "Ashgabat",
+      "product_quantity": "150 kg",
+      "product_description": "something",
+      "delivery": false,
+      "credit": false,
+      "is_vip": false,
+      "is_active": true,
+      "joined_date": "2023-04-09",
+      "product_category": "Miweler"
+    },
+    {
+      "id": 9,
+      "product_name": "erik",
+      "product_price": "100.20",
+      "product_image": "http://127.0.0.1:8000/media/product/img-001.jpg",
+      "product_image2": null,
+      "product_image3": null,
+      "product_image4": null,
+      "product_image5": null,
+      "product_image6": null,
+      "product_image7": null,
+      "product_image8": null,
+      "product_address": "Ashgabat",
+      "product_quantity": "150 kg",
+      "product_description": "something",
+      "delivery": false,
+      "credit": false,
+      "is_vip": false,
+      "is_active": true,
+      "joined_date": "2023-04-09",
+      "product_category": "Miweler"
+    }
+    ]
+}
+ ulanyjylaryn gosan we admin panelde is_active True edilen ahli harytlar gelyar. Paginasiya we search hem bar.
+ We koneden taza, tazaden kona, arzandan gymmada, gymmatdan arzana getirmek uchin:
+
+    --> http://127.0.0.1:8000/api/allproducts?ordering=newtoold <--           # tazedden kona getirya
+    --> http://127.0.0.1:8000/api/allproducts?ordering=oldtonew <--           # koneden taza getirya
+    --> http://127.0.0.1:8000/api/allproducts?ordering=cheaptoextensive <--   # arzandan gymmada getirya
+    --> http://127.0.0.1:8000/api/allproducts?ordering=extensivetocheap <--   # gymmatdan arzana getirya
+    --> http://127.0.0.1:8000/api/allproducts <--                             # tertiplenmedik yagdayda getirya
+
+Search ulanmak uchin:
+    
+    --> http://127.0.0.1:8000/api/allproducts?search=product_name <--
+
+Dukanyn productlary barik gelenok ony son uytgetdik Dukanyn productlary dine dukanyn ustune basylanda chykaysyn.
+ahli productlaryn ichinde search edya shona menzesh hemmesini getirya eger tapmasa bosh gelya.
+Ahli harytlar Paginasiya bilen gelya.
+-----------------------------------------------------------------------------------------------------------------
+Get products by category API:
+
+       --> http://127.0.0.1:8000/api/productsbycategory/${category id} <--
+
+   meselem:
+   method: GET
+
+   netije:
+    
+{
+  "count": 11,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": 10,
+      "product_name": "mandarin",
+      "product_price": "100.20",
+      "product_image": "http://127.0.0.1:8000/media/product/img-001.jpg",
+      "product_image2": null,
+      "product_image3": null,
+      "product_image4": null,
+      "product_image5": null,
+      "product_image6": null,
+      "product_image7": null,
+      "product_image8": null,
+      "product_address": "Ashgabat",
+      "product_quantity": "150 kg",
+      "product_description": "something",
+      "delivery": false,
+      "credit": false,
+      "is_vip": false,
+      "is_active": true,
+      "joined_date": "2023-04-09",
+      "product_category": "Miweler"
+    },
+    {
+      "id": 9,
+      "product_name": "erik",
+      "product_price": "100.20",
+      "product_image": "http://127.0.0.1:8000/media/product/img-001.jpg",
+      "product_image2": null,
+      "product_image3": null,
+      "product_image4": null,
+      "product_image5": null,
+      "product_image6": null,
+      "product_image7": null,
+      "product_image8": null,
+      "product_address": "Ashgabat",
+      "product_quantity": "150 kg",
+      "product_description": "something",
+      "delivery": false,
+      "credit": false,
+      "is_vip": false,
+      "is_active": true,
+      "joined_date": "2023-04-09",
+      "product_category": "Miweler"
+    }
+    ]
+}
+dine shol kategoriya degishli is_active true bolan harytlar gelya. Paginasiya we search hem bar. 
+We koneden taza, tazaden kona, arzandan gymmada, gymmatdan arzana getirmek uchin:
+
+    --> http://127.0.0.1:8000/api/productsbycategory/${category id}?ordering=newtoold <--           # tazedden kona getirya
+    --> http://127.0.0.1:8000/api/productsbycategory/${category id}?ordering=oldtonew <--           # koneden taza getirya
+    --> http://127.0.0.1:8000/api/productsbycategory/${category id}?ordering=cheaptoextensive <--   # arzandan gymmada getirya
+    --> http://127.0.0.1:8000/api/productsbycategory/${category id}?ordering=extensivetocheap <--   # gymmatdan arzana getirya
+    --> http://127.0.0.1:8000/api/productsbycategory/${category id} <--                             # tertiplenmedik yagdayda getirya
+
+Search ulanmak uchin:
+    
+    --> http://127.0.0.1:8000/api/productsbycategory/${category id}?search=product_name <--
+
+dine shol kategoriya degishli productlaryn ichinde search edya shona menzesh hemmesini getirya eger tapmasa bosh gelya.
+Ahli harytlar Paginasiya bilen gelya.
+--------------------------------------------------------------------------------------------------------------------------------
+Get products by id API:
+
+       --> http://127.0.0.1:8000/api/productsbyid/${product id} <--
+
+   meselem:
+   method: GET
+
+   netije:
+    
+    {
+      "id": 10,
+      "product_name": "mandarin",
+      "product_price": "100.20",
+      "product_image": "http://127.0.0.1:8000/media/product/img-001.jpg",
+      "product_image2": null,
+      "product_image3": null,
+      "product_image4": null,
+      "product_image5": null,
+      "product_image6": null,
+      "product_image7": null,
+      "product_image8": null,
+      "product_address": "Ashgabat",
+      "product_quantity": "150 kg",
+      "product_description": "something",
+      "delivery": false,
+      "credit": false,
+      "is_vip": false,
+      "is_active": true,
+      "joined_date": "2023-04-09",
+      "product_category": "Miweler"
+    }
+ dine yekeje haryt gelyanligi uchin paginasiya we search yok. Dine is_active True bolanlar gelya.
+------------------------------------------------------------------------------------------------------------
+Get products by user API:
+
+       --> http://127.0.0.1:8000/api/productsbyuser <--
+
+   meselem:
+   method: GET
+   header: Token 358d73dd587000f0ba2b463fed99ebe8ddb42957
+
+   netije:
+{
+  "count": 14,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": 16,
+      "product_name": "banan",
+      "product_price": "60.20",
+      "product_image": null,
+      "product_image2": null,
+      "product_image3": null,
+      "product_image4": null,
+      "product_image5": null,
+      "product_image6": null,
+      "product_image7": null,
+      "product_image8": null,
+      "product_address": "Ashgabat",
+      "product_quantity": "150 kg",
+      "product_description": "something",
+      "delivery": false,
+      "credit": false,
+      "is_vip": false,
+      "is_active": true,
+      "joined_date": "2023-04-09",
+      "product_category": "Miweler"
+    },
+    {
+      "id": 15,
+      "product_name": "banan",
+      "product_price": "60.20",
+      "product_image": null,
+      "product_image2": null,
+      "product_image3": null,
+      "product_image4": null,
+      "product_image5": null,
+      "product_image6": null,
+      "product_image7": null,
+      "product_image8": null,
+      "product_address": "Ashgabat",
+      "product_quantity": "150 kg",
+      "product_description": "something",
+      "delivery": false,
+      "credit": false,
+      "is_vip": false,
+      "is_active": true,
+      "joined_date": "2023-04-09",
+      "product_category": "Miweler"
+    }
+]
+
+ulanyjy id ugratmak gerek dal tokene gora tapya.
+ulanyjyn gosan ahli harytlaryny getirya (is_active false bolsada getirya). Paginasiya we search hen bar.
+search etmek uchin:
+
+           --> http://127.0.0.1:8000/api/productsbyuser?search=product_name <--
+
+dine shol ulanyjyn gosan harytlarynda search edya.
+
+eger user admin panelden is_staff True edilmedik bolsa:
+
+STATUS: 404 BAD REQUEST 
+message:
+    {
+         "ERROR": "this user is not active yet."
+    }
+^ status gelya.
+
+bulara tertipleme goymadym.
+Ahli harytlar paginasiya bilen gelya.
+--------------------------------------------------------------------------------------------------------------
+Update or Delete user products API:
+
+       --> http://127.0.0.1:8000/api/updateordeleteuserproduct/${product id} <--
+
+   meselem:
+   method: PATCH
+   header: Token 358d73dd587000f0ba2b463fed99ebe8ddb42957
+
+    {
+        "product_price": new price of product
+    }
+
+    netije:
+
+    {
+        "SUCCESS": "product updated successfully."
+    }
+
+    ya-da:
+
+   method: DELETE
+   header: Token 358d73dd587000f0ba2b463fed99ebe8ddb42957 
+   netije:
+
+   {
+        "SUCCESS": "product deleted successfully."
+   }
+
+ulanyjy dine oz gosan onuminin dine bahasyny uytgedip bilmeli.
+---------------------------------------------------------------------------------------------------------------
+Add product API:
+
+    --> http:127.0.0.1:8000/api/addproduct <--
+
+    meselem:
+    method: POST
+    header: Token 358d73dd587000f0ba2b463fed99ebe8ddb42957 
+    
+    {
+      product_adder:                 # ulanyjyn tel nomeri automat goshulyar ugratmak gerekdal.
+
+      "product_name": "mandarin",
+      "product_price": 100.20,
+      "product_image": File        # suratlery file edip ugratmaly.
+      "product_image2": null,       # surat goshmasa null edip ugratmaly
+      "product_image3": null,
+      "product_image4": null,
+      "product_image5": null,
+      "product_image6": null,
+      "product_image7": null,
+      "product_image8": null,
+      "product_address": "Ashgabat",
+      "product_quantity": "150 kg",
+      "product_description": "something",
+      "delivery": false,
+      "credit": false,
+      "is_vip": false,
+      "is_active":             # ugratmak gerekdal default false diyip kabul edya
+      "product_category": "Miweler"
+    }
+
+netije:
+
+STATUS: 201 CREATED
+message:
+    {
+        "SUCCESS": "product added successfully."
+    }
+eger admin panelden is_staff True edilmedik user haryt goshjak bolsa:
+
+STATUS: 400 BAD REQUEST
+message:
+    {
+        "ERROR": "this user is not active yet."
+    }
+berya.
+-------------------------------------------------------------------------------------------------------------------
+
+APIs for Dukanyn:
+
+Get all Dukan product API:
+
+    --> http:127.0.0.1:8000/api/alldukanproducts <--
+
+    meselem:
+    method: GET
+    netije:
+
+{
+  "count": 3,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": 1,
+      "product_name": "Kowus",
+      "product_price": "300.00",
+      "product_image": "http://127.0.0.1:8000/media/product/img-002.jpg",
+      "product_image2": "http://127.0.0.1:8000/media/product/img-002_879jttY.jpg",
+      "product_image3": null,
+      "product_image4": null,
+      "product_image5": null,
+      "product_image6": null,
+      "product_image7": null,
+      "product_image8": null,
+      "product_address": "Ahal/Gokdepe",
+      "product_quantity": "200",
+      "product_description": "something",
+      "delivery": true,
+      "credit": true,
+      "joined_date": "2023-04-10"
+    },
+    {
+      "id": 2,
+      "product_name": "koynek",
+      "product_price": "100.00",
+      "product_image": "http://127.0.0.1:8000/media/product/img-002_ZL4qA4E.jpg",
+      "product_image2": null,
+      "product_image3": null,
+      "product_image4": null,
+      "product_image5": null,
+      "product_image6": null,
+      "product_image7": null,
+      "product_image8": null,
+      "product_address": "Ashgabat",
+      "product_quantity": "200",
+      "product_description": "koynek",
+      "delivery": true,
+      "credit": false,
+      "joined_date": "2023-04-10"
+    }
+]
+admin tarapyndan gosulan dukanyn hemme harytlery gelyar. Paginasiya we search hem bar. Paginasiya bir gezekde 20 sany getiryar.
+Register bolmadyk ulanyjylar hem gorup biler yaly token goymadym.
+We koneden taza, tazaden kona, arzandan gymmada, gymmatdan arzana getirmek uchin:
+
+    --> http://127.0.0.1:8000/api/alldukanproducts?ordering=newtoold <--           # tazedden kona getirya
+    --> http://127.0.0.1:8000/api/alldukanproducts?ordering=oldtonew <--           # koneden taza getirya
+    --> http://127.0.0.1:8000/api/alldukanproducts?ordering=cheaptoextensive <--   # arzandan gymmada getirya
+    --> http://127.0.0.1:8000/api/alldukanproducts?ordering=extensivetocheap <--   # gymmatdan arzana getirya
+    --> http://127.0.0.1:8000/api/alldukanproducts <--                             # tertiplenmedik yagdayda getirya
+
+Search ulanmak uchin:
+    
+    --> http://127.0.0.1:8000/api/alldukanproducts?search=product_name <--
+
+dine dukana degishli productlaryn ichinde search edya shona menzesh hemmesini getirya eger tapmasa bosh gelya.
+--------------------------------------------------------------------------------------------------------------------------------
+Dukan product by id API:
+
+    --> http:127.0.0.1:8000/api/alldukanproducts/{product id} <--
+
+    meselem:
+    method: GET
+    netije:
+
+    {
+        "id": 1,
+        "product_name": "Kowus",
+        "product_price": "300.00",
+        "product_image": "http://127.0.0.1:8000/media/product/img-002.jpg",
+        "product_image2": "http://127.0.0.1:8000/media/product/img-002_879jttY.jpg",
+        "product_image3": null,
+        "product_image4": null,
+        "product_image5": null,
+        "product_image6": null,
+        "product_image7": null,
+        "product_image8": null,
+        "product_address": "Ahal/Gokdepe",
+        "product_quantity": "200",
+        "product_description": "something",
+        "delivery": true,
+        "credit": true,
+        "joined_date": "2023-04-10"
+}
+ dine yekeje haryt gelyanligi uchin paginasiya we search yok.
+----------------------------------------------------------------------------------------------------------------

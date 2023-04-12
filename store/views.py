@@ -1,12 +1,13 @@
 from rest_framework.decorators import api_view, permission_classes, authentication_classes, parser_classes
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.authtoken.models import Token
-from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.hashers import check_password
+from rest_framework.authtoken.models import Token
+from rest_framework.response import Response
 from rest_framework import status
+from django.db.models import Q
 from .serializers import *
 
 @api_view(['POST'])
@@ -27,7 +28,7 @@ def register(request):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data)
+            return Response({'SUCCESS': 'user added successfully.'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
@@ -44,19 +45,11 @@ def login(request):
                 Token.objects.create(user=user)
                 return Response({'SUCCESS': 'You have been logged in.'}, status=status.HTTP_201_CREATED)
             except:
-                token = user.auth_token.key
-                return Response({'ERROR': f'phone number {phone_number} is already logged in.'}, status=status.HTTP_400_BAD_REQUEST)
+                Token.objects.filter(user=user).delete()
+                Token.objects.create(user=user)
+                return Response({'SUCCESS': f'phone number {phone_number} logged in again.'}, status=status.HTTP_201_CREATED)
         elif check_password(password, user.password) == False:
             return Response({'ERROR': 'Invalid password'}, status=status.HTTP_417_EXPECTATION_FAILED)
-
-@api_view(['POST'])
-@authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
-def logout(request):
-    if request.method == 'POST':
-        token= Token.objects.get(user=request.user)
-        token.delete()
-        return Response({'SUCCESS': 'You have been logged out.'})
 
 @api_view(['DELETE'])
 @authentication_classes([TokenAuthentication])
@@ -101,7 +94,20 @@ def product_list(request):
     if request.method == 'GET':
         paginator = PageNumberPagination()
         paginator.page_size = 20
-        data = Product.objects.filter(is_active=True).order_by('-id')
+        sort_by = request.GET.get('ordering')
+        search = request.GET.get('search')
+        if sort_by == 'newtoold':
+            data = Product.objects.filter(is_active=True).order_by('-id')
+        elif sort_by == 'oldtonew':
+            data = Product.objects.filter(is_active=True).order_by('id')
+        elif sort_by == 'cheaptoextensive':
+            data = Product.objects.filter(is_active=True).order_by('product_price')
+        elif sort_by == 'extensivetocheap':
+            data = Product.objects.filter(is_active=True).order_by('-product_price')
+        elif search:
+            data = Product.objects.filter(Q(product_name__icontains=search), is_active=True)
+        else:
+            data = Product.objects.filter(is_active=True)
         result_data = paginator.paginate_queryset(data, request)
         serializer = ProductSerializer(result_data, context={'request': request}, many=True)
         return paginator.get_paginated_response(serializer.data)
@@ -109,11 +115,24 @@ def product_list(request):
 @api_view(['GET'])
 def products_by_category(request, id):
     if request.method == 'GET':
+        paginator = PageNumberPagination()
+        paginator.page_size = 20
+        sorted_by = request.GET.get('ordering')
+        search = request.GET.get('search')
         try:
             category = Category.objects.get(id=id)
-            paginator = PageNumberPagination()
-            paginator.page_size = 20
-            data = category.products.filter(is_active=True).order_by('-id')
+            if sorted_by == 'newtoold':
+                data = category.products.filter(is_active=True).order_by('-id')
+            elif sorted_by == 'oldtonew':
+                data = category.products.filter(is_active=True).order_by('id')
+            elif sorted_by == 'cheaptoextensive':
+                data = category.products.filter(is_active=True).order_by('product_price')
+            elif sorted_by == 'extensivetocheap':
+                data = category.products.filter(is_active=True).order_by('-product_price')
+            elif search:
+                data = category.products.filter(Q(product_name__icontains=search), is_active=True)
+            else:
+                data = category.products.filter(is_active=True)
             result_data = paginator.paginate_queryset(data, request)
             serializer = ProductSerializer(result_data, context={'request': request}, many=True)
             return paginator.get_paginated_response(serializer.data)
@@ -136,30 +155,40 @@ def products_by_id(request, id):
 @parser_classes([JSONParser, MultiPartParser, FormParser])
 def add_product(request):
     if request.method == 'POST':
-        serializer = ProductSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(product_adder=request.user)
-            return Response({'SUCCESS': 'product added successfully.'}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if request.user.is_staff == True:
+            serializer = ProductSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save(product_adder=request.user)
+                return Response({'SUCCESS': 'product added successfully.'}, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({'ERROR': 'this user is not active yet.'}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def products_by_user(request):
+    search = request.GET.get('search')
     if request.method == 'GET':
-        paginator = PageNumberPagination()
-        paginator.page_size = 20
-        data = request.user.added_products.filter(is_active=True).order_by('-id')
-        result_data = paginator.paginate_queryset(data, request)
-        serializer = ProductSerializer(result_data, context={'request': request}, many=True)
-        return paginator.get_paginated_response(serializer.data)
+        if request.user.is_staff == True:
+            paginator = PageNumberPagination()
+            paginator.page_size = 20
+            if search:
+                data = request.user.added_products.filter(Q(product_name__icontains=search))
+            else:
+                data = request.user.added_products.all().order_by('-id')
+            result_data = paginator.paginate_queryset(data, request)
+            serializer = ProductSerializer(result_data, context={'request': request}, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        else:
+            return Response({'ERROR': 'this user is not active yet.'}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['PATCH', 'DELETE'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def update_user_product(request, id):
     try:
-        product = Product.objects.get(id=id, is_active=True)
+        product = Product.objects.get(id=id)
     except Product.DoesNotExist:
         return Response({'NOT FOUND': 'product does not exists'}, status=status.HTTP_404_NOT_FOUND)
     if request.method == 'PATCH':
@@ -171,4 +200,39 @@ def update_user_product(request, id):
     elif request.method == 'DELETE':
         product.delete()
         return Response({'SUCCESS': 'product deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
-        
+
+# Views for Dukan
+
+@api_view(['GET'])
+def all_dukan_products(request):
+    if request.method == 'GET':
+        mainClass = Dukan.objects.all()
+        sort_by = request.GET.get('ordering')
+        search = request.GET.get('search')
+        paginator = PageNumberPagination()
+        paginator.page_size = 20
+        if sort_by == 'newtoold':
+            data = mainClass.order_by('-id')
+        elif sort_by == 'oldtonew':
+            data = mainClass.order_by('id')
+        elif sort_by == 'cheaptoextensive':
+            data = mainClass.order_by('product_price')
+        elif sort_by == 'extensivetocheap':
+            data = mainClass.order_by('-product_price')
+        elif search:
+            data = Dukan.objects.filter(Q(product_name__icontains=search))
+        else:
+            data = Dukan.objects.all()
+        result_data = paginator.paginate_queryset(data, request)
+        serializer = DukanSerializer(result_data, context={'request': request}, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+@api_view(['GET'])
+def dukan_product_by_id(request, id):
+    if request.method == 'GET':
+        try:
+            data = Dukan.objects.get(id=id)
+        except Dukan.DoesNotExist:
+            return Response({'ERROR': 'product does NOT exists or deleted.'}, status=status.HTTP_404_NOT_FOUND)
+        serializer = DukanSerializer(data, context={'request': request})
+        return Response(serializer.data)

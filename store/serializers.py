@@ -38,14 +38,21 @@ class ProductSerializer(serializers.ModelSerializer):
                  'product_image2',
                  'product_image3',
                  'product_image4', 
-                 'product_image5', 
-                 'phone_number', 
+                 'product_image5',
+                 'product_image6',
+                 'product_image7',
+                 'product_image8', 
                  'product_address', 
                  'product_quantity', 
-                 'about_product', 
-                 'russian_product_name', 
+                 'product_description', 
                  'delivery', 
                  'credit', 
                  'is_vip', 
+                 'is_active',
                  'joined_date', 
                  'product_category')
+
+class DukanSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Dukan
+        fields = '__all__'
