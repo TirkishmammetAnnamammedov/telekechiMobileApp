@@ -3,9 +3,10 @@ from rest_framework.authtoken.views import Token
 from .models import *
 
 class UserSerializer(serializers.ModelSerializer):
+    token = serializers.SerializerMethodField()
     class Meta:
         model = Client
-        fields = ('id', 'phone_number', 'password')
+        fields = ('id', 'phone_number', 'password', 'token')
 
         extra_kwargs = {'password':{
             'write_only': True
@@ -17,6 +18,10 @@ class UserSerializer(serializers.ModelSerializer):
         user.save()
         Token.objects.create(user=user)
         return user
+    
+    def get_token(self, obj):
+        token = Token.objects.get(user=obj)
+        return token.key
 
 class BannerSerializer(serializers.ModelSerializer):
     class Meta:

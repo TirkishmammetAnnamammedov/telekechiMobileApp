@@ -27,10 +27,15 @@ Register API:
     method: POST
     
     {
-        "phone_number": "+9936xxxxxxx"
+        "phone_number": "+9936xxxxxxx",
         "password": "userspassword"     # min length 6
     }
-
+    netije:
+    {
+        "phone_number": "+9936xxxxxxx",
+        "password": "userspassword",
+        "token": "lkdfjsldjkf3j3lj53lj3lj5l5j3lkj545"
+    }
 ulanyjy doredilenden son admin panelden ulanyjyny is_active=True, is_staff=True etmeli sonra ulanyjy active bolyar.
 --------------------------------------------------------------------------------------------------
 Login API:
@@ -41,8 +46,14 @@ Login API:
     method: POST
 
     {
-        "phone_number": "+9936xxxxxxx"
+        "phone_number": "+9936xxxxxxx",
         "password": "userspassword"      
+    }
+    netije:
+    {
+        "phone_number": "+9936xxxxxxx",
+        "password": "userspassword",
+        "token": "lkdfjsldjkf3j3lj53lj3lj5l5j3lkj545"
     }
 
 eger ulanyjy admin panelde is_active ve is_staff True bolsa login bolya, eger bolmasa token doredilya yone active dal
@@ -53,16 +64,17 @@ Get profile data API:
 
    meselem:
    method: GET
-   header: Token 46d72f1ff348c6f94385c9db91e78d97f40bc57b # ulanyjyn tokeni.
 
    netije:
 
    {
     "id": 8,
-    "phone_number": "+99361418884"
+    "phone_number": "+99361418884",
+    "token": "lkdfjsldjkf3j3lj53lj3lj5l5j3lkj545"
+
    }
 
-   netijede sho id daki userin telefon belgisi bilen id si gelya (token we parol gelmez yaly etdim)
+   netijede sho id daki userin id, telefon belgisi, tokeni gelya (parol gelmez yaly etdim)
 --------------------------------------------------------------------------------------------------------
 Delete profile data API:
 

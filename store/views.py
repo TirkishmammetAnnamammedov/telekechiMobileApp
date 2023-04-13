@@ -1,7 +1,8 @@
-from rest_framework.decorators import api_view, permission_classes, authentication_classes, parser_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes, parser_classes, throttle_classes
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.throttling import SimpleRateThrottle
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.hashers import check_password
 from rest_framework.authtoken.models import Token
@@ -10,7 +11,13 @@ from rest_framework import status
 from django.db.models import Q
 from .serializers import *
 
+class IpThrottle(SimpleRateThrottle):
+    rate = '10/min'
+    def get_cache_key(self, request, view):
+        return self.get_ident(request)
+
 @api_view(['POST'])
+@throttle_classes([IpThrottle])
 def register(request):
     if request.method == 'POST':
         if request.data['phone_number'][:5] != '+9936' or int(request.data['phone_number'][4:6]) > 65 or int(request.data['phone_number'][4:6]) < 61:
@@ -27,11 +34,18 @@ def register(request):
             return Response({'ERROR': 'This password is NOT valid. Maximum length of password must be 20.'}, status=status.HTTP_400_BAD_REQUEST)
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response({'SUCCESS': 'user added successfully.'}, status=status.HTTP_201_CREATED)
+            user = serializer.save()
+            token = Token.objects.get(user=user)
+            data = {
+                'id': user.id,
+                'phone_number': user.phone_number,
+                'token': token.key
+            }
+            return Response(data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
+@throttle_classes([IpThrottle])
 def login(request):
     if request.method == 'POST':
         phone_number = request.data['phone_number']
@@ -42,16 +56,21 @@ def login(request):
             return Response({'ERROR': f'phone number: {phone_number} is unauthorized.'}, status=status.HTTP_401_UNAUTHORIZED)
         if check_password(password, user.password) == True:
             try:
-                Token.objects.create(user=user)
-                return Response({'SUCCESS': 'You have been logged in.'}, status=status.HTTP_201_CREATED)
+                token = Token.objects.create(user=user)
+                return Response({'id': user.id,
+                                 'phone_number': user.phone_number,
+                                 'token': token.key}, status=status.HTTP_201_CREATED)
             except:
                 Token.objects.filter(user=user).delete()
-                Token.objects.create(user=user)
-                return Response({'SUCCESS': f'phone number {phone_number} logged in again.'}, status=status.HTTP_201_CREATED)
+                token = Token.objects.create(user=user)
+                return Response({'id': user.id,
+                                 'phone_number': user.phone_number,
+                                 'token': token.key}, status=status.HTTP_201_CREATED)
         elif check_password(password, user.password) == False:
             return Response({'ERROR': 'Invalid password'}, status=status.HTTP_417_EXPECTATION_FAILED)
 
 @api_view(['DELETE'])
+@throttle_classes([IpThrottle])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def delete_profile(request, id):
@@ -64,18 +83,20 @@ def delete_profile(request, id):
             return Response({'ERROR': 'user does not exist.'}, status=status.HTTP_401_UNAUTHORIZED)
 
 @api_view(['GET'])
-@authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@throttle_classes([IpThrottle])
 def single_user_information(request, id):
     if request.method == 'GET':
         try:
             user = Client.objects.get(id=id)
-            serializer = UserSerializer(user, context={'requsest': request})
-            return Response(serializer.data)
+            serialized_user = UserSerializer(user).data
+            token = Token.objects.get(user=user)
+            serialized_user['token'] = token.key
+            return Response(serialized_user)
         except Client.DoesNotExist:
             return Response({'ERROR': 'user does not exist.'}, status=status.HTTP_401_UNAUTHORIZED)
 
 @api_view(['GET'])
+@throttle_classes([IpThrottle])
 def banner_list(request):
     if request.method == 'GET':
         data = Banner.objects.all()
@@ -83,6 +104,7 @@ def banner_list(request):
         return Response(serializer.data)
 
 @api_view(['GET'])
+@throttle_classes([IpThrottle])
 def category_list(request):
     if request.method == 'GET':
         data = Category.objects.all()
@@ -90,6 +112,7 @@ def category_list(request):
         return Response(serializer.data)
 
 @api_view(['GET'])
+@throttle_classes([IpThrottle])
 def product_list(request):
     if request.method == 'GET':
         paginator = PageNumberPagination()
@@ -113,6 +136,7 @@ def product_list(request):
         return paginator.get_paginated_response(serializer.data)
 
 @api_view(['GET'])
+@throttle_classes([IpThrottle])
 def products_by_category(request, id):
     if request.method == 'GET':
         paginator = PageNumberPagination()
@@ -140,6 +164,7 @@ def products_by_category(request, id):
             return Response({'ERROR': 'Category does NOT exists'}, status=status.HTTP_204_NO_CONTENT)
 
 @api_view(['GET'])
+@throttle_classes([IpThrottle])
 def products_by_id(request, id):
     try:
         item = Product.objects.get(id=id)
@@ -150,6 +175,7 @@ def products_by_id(request, id):
         return Response(serializer.data)
 
 @api_view(['POST'])
+@throttle_classes([IpThrottle])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 @parser_classes([JSONParser, MultiPartParser, FormParser])
@@ -165,6 +191,7 @@ def add_product(request):
             return Response({'ERROR': 'this user is not active yet.'}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
+@throttle_classes([IpThrottle])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def products_by_user(request):
@@ -184,6 +211,7 @@ def products_by_user(request):
             return Response({'ERROR': 'this user is not active yet.'}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['PATCH', 'DELETE'])
+@throttle_classes([IpThrottle])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def update_user_product(request, id):
@@ -204,6 +232,7 @@ def update_user_product(request, id):
 # Views for Dukan
 
 @api_view(['GET'])
+@throttle_classes([IpThrottle])
 def all_dukan_products(request):
     if request.method == 'GET':
         mainClass = Dukan.objects.all()
@@ -228,6 +257,7 @@ def all_dukan_products(request):
         return paginator.get_paginated_response(serializer.data)
 
 @api_view(['GET'])
+@throttle_classes([IpThrottle])
 def dukan_product_by_id(request, id):
     if request.method == 'GET':
         try:
@@ -236,3 +266,4 @@ def dukan_product_by_id(request, id):
             return Response({'ERROR': 'product does NOT exists or deleted.'}, status=status.HTTP_404_NOT_FOUND)
         serializer = DukanSerializer(data, context={'request': request})
         return Response(serializer.data)
+        
