@@ -30,10 +30,10 @@ class Client(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.phone_number
     
-    def has_perm(self, perm, obj=None):
+    def has_perms(self, perm, obj=None):
         return True
     
-    def has_module_perm(self, app_label):
+    def has_module_perms(self, app_label):
         return True
     
     class Meta:
