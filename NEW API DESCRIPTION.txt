@@ -1,0 +1,25 @@
+1. registrasiya bolandan sonra active ya-da  active daldigini bilmek uchin is_staff gorner yaly etdim.
+
+.../api/getprofiledata/${user id} api de hem is_staff gelyar.
+
+2. inni filter sheydip bolyar:
+
+.../api/allproducts?ordering=ORDERING_TYPE&search=PRODUCT_NAME
+
+bu is_active = True bolan ahli harytlardan PRODUCT_NAME lary alyar ve ORDERING_TYPE gornusde tertipleyar.
+
+dine ordering ulanyp search= ulanylmasa hemme onumleri tertipleyar,
+
+dine search ulanyp ordering ulanylmasa ahli onumlerde search edyar,
+
+hem ordering hem search bile ulanylsa(yokardaky yaly) searchde tapylan onumleri orderingdaki berlen gornus bilen tertipleyar.
+
+3.categoriya degisli harytlarda hem edil sholor yaly:
+
+meselem:
+
+.../api/productsbycategory/${category id}?ordering=cheaptoextensive&search=banan 
+
+bu yerde degisli id daki categoriyanyn onumlerinden bananlar eger bar bolsa tapyar we arzandan gymmada tertipleyar.
+
+Dukanyn onumlerinde hem edil shular yaly ulanaymaly.

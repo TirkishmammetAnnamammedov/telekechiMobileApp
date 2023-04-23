@@ -13,6 +13,7 @@ from .serializers import *
 
 class IpThrottle(SimpleRateThrottle):
     rate = '10/min'
+    
     def get_cache_key(self, request, view):
         return self.get_ident(request)
 
@@ -39,7 +40,8 @@ def register(request):
             data = {
                 'id': user.id,
                 'phone_number': user.phone_number,
-                'token': token.key
+                'token': token.key,
+                'is_staff': user.is_staff
             }
             return Response(data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -59,13 +61,15 @@ def login(request):
                 token = Token.objects.create(user=user)
                 return Response({'id': user.id,
                                  'phone_number': user.phone_number,
-                                 'token': token.key}, status=status.HTTP_201_CREATED)
+                                 'token': token.key,
+                                 'is_staff': user.is_staff}, status=status.HTTP_201_CREATED)
             except:
                 Token.objects.filter(user=user).delete()
                 token = Token.objects.create(user=user)
                 return Response({'id': user.id,
                                  'phone_number': user.phone_number,
-                                 'token': token.key}, status=status.HTTP_201_CREATED)
+                                 'token': token.key,
+                                 'is_staff': user.is_staff}, status=status.HTTP_201_CREATED)
         elif check_password(password, user.password) == False:
             return Response({'ERROR': 'Invalid password'}, status=status.HTTP_417_EXPECTATION_FAILED)
 
@@ -121,12 +125,20 @@ def product_list(request):
         search = request.GET.get('search')
         if sort_by == 'newtoold':
             data = Product.objects.filter(is_active=True).order_by('-id')
+            if search:
+                data = Product.objects.filter(Q(product_name__icontains=search), is_active=True).order_by('-id')
         elif sort_by == 'oldtonew':
             data = Product.objects.filter(is_active=True).order_by('id')
+            if search:
+                data = Product.objects.filter(Q(product_name__icontains=search), is_active=True).order_by('id')
         elif sort_by == 'cheaptoextensive':
             data = Product.objects.filter(is_active=True).order_by('product_price')
+            if search:
+                data = Product.objects.filter(Q(product_name__icontains=search), is_active=True).order_by('product_price')
         elif sort_by == 'extensivetocheap':
             data = Product.objects.filter(is_active=True).order_by('-product_price')
+            if search:
+                data = Product.objects.filter(Q(product_name__icontains=search), is_active=True).order_by('-product_price')
         elif search:
             data = Product.objects.filter(Q(product_name__icontains=search), is_active=True)
         else:
@@ -147,12 +159,20 @@ def products_by_category(request, id):
             category = Category.objects.get(id=id)
             if sorted_by == 'newtoold':
                 data = category.products.filter(is_active=True).order_by('-id')
+                if search:
+                    data = category.products.filter(Q(product_name__icontains=search), is_active=True).order_by('-id')
             elif sorted_by == 'oldtonew':
                 data = category.products.filter(is_active=True).order_by('id')
+                if search:
+                    data = category.products.filter(Q(product_name__icontains=search), is_active=True).order_by('id')
             elif sorted_by == 'cheaptoextensive':
                 data = category.products.filter(is_active=True).order_by('product_price')
+                if search:
+                    data = category.products.filter(Q(product_name__icontains=search), is_active=True).order_by('product_price')
             elif sorted_by == 'extensivetocheap':
                 data = category.products.filter(is_active=True).order_by('-product_price')
+                if search:
+                    data = category.products.filter(Q(product_name__icontains=search), is_active=True).order_by('-product_price')
             elif search:
                 data = category.products.filter(Q(product_name__icontains=search), is_active=True)
             else:
@@ -242,12 +262,20 @@ def all_dukan_products(request):
         paginator.page_size = 20
         if sort_by == 'newtoold':
             data = mainClass.order_by('-id')
+            if search:
+                data = mainClass.filter(Q(product_name__icontains=search)).order_by('-id')
         elif sort_by == 'oldtonew':
             data = mainClass.order_by('id')
+            if search:
+                data = mainClass.filter(Q(product_name__icontains=search)).order_by('id')
         elif sort_by == 'cheaptoextensive':
             data = mainClass.order_by('product_price')
+            if search:
+                data = mainClass.filter(Q(product_name__icontains=search)).order_by('product_price')
         elif sort_by == 'extensivetocheap':
             data = mainClass.order_by('-product_price')
+            if search:
+                data = mainClass.filter(Q(product_name__icontains=search)).order_by('-product_price')
         elif search:
             data = Dukan.objects.filter(Q(product_name__icontains=search))
         else:
@@ -266,4 +294,3 @@ def dukan_product_by_id(request, id):
             return Response({'ERROR': 'product does NOT exists or deleted.'}, status=status.HTTP_404_NOT_FOUND)
         serializer = DukanSerializer(data, context={'request': request})
         return Response(serializer.data)
-        

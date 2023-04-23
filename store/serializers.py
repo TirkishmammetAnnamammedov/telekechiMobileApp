@@ -6,7 +6,7 @@ class UserSerializer(serializers.ModelSerializer):
     token = serializers.SerializerMethodField()
     class Meta:
         model = Client
-        fields = ('id', 'phone_number', 'password', 'token')
+        fields = ('id', 'phone_number', 'password', 'token', 'is_staff')
 
         extra_kwargs = {'password':{
             'write_only': True
