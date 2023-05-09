@@ -1,6 +1,7 @@
 
 from pathlib import Path
 import os
+import json
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -10,12 +11,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-4-44a#)ua_8hg@h(#@jgvud&a*t86-8k36z#@x%kf2f^@dtk+0'
+
+with open('config/secrets.json') as key:
+    secret = json.load(key)
+
+SECRET_KEY = secret['SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['telekechi.com.tm', 'localhost', '127.0.0.1']
 
 
 # Application definition
@@ -79,23 +84,17 @@ WSGI_APPLICATION = 'telekechiMobile.wsgi.application'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'telekechi_mobile',
-#         'USER': 'postgres',
-#         'PASSWORD': '1',
-#         'HOST': 'localhost',
-#         'PORT': '5432'
-#     }
-# }
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'telekechi_mobile',
+        'USER': 'postgres',
+        'PASSWORD': '1',
+        'HOST': 'localhost', #change with domain
+        'PORT': '5432'
     }
 }
+
 
 
 # Password validation
@@ -133,7 +132,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
 STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'admininterfacefiles'
+STATIC_ROOT = BASE_DIR / 'adminfiles'
 
 # Settings for Media
 
