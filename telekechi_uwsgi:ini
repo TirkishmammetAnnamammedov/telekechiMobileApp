@@ -1,0 +1,8 @@
+chdir = home/ubuntu/telekechiMobileApp;
+module = telekechiMobileApp.wsgi:application;
+env = DJANGO_SETTINGS_MODULE = telekechiMobileApp.settings
+master = true;
+processes = 5;
+socket = /run/uwsgi/app/telekechiMobileApp/socket;
+chmod-socket = 664;
+vacuum = true;

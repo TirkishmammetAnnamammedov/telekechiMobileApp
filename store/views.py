@@ -12,7 +12,7 @@ from django.db.models import Q
 from .serializers import *
 
 class IpThrottle(SimpleRateThrottle):
-    rate = '10/min'
+    rate = '100/min'
     
     def get_cache_key(self, request, view):
         return self.get_ident(request)
@@ -73,12 +73,10 @@ def login(request):
         elif check_password(password, user.password) == False:
             return Response({'ERROR': 'Invalid password'}, status=status.HTTP_417_EXPECTATION_FAILED)
 
-@api_view(['DELETE'])
+@api_view(['POST'])
 @throttle_classes([IpThrottle])
-@authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
 def delete_profile(request, id):
-    if request.method == 'DELETE':
+    if request.method == 'POST':
         try:
             user = Client.objects.get(id=id)
             user.delete()
@@ -90,20 +88,20 @@ def delete_profile(request, id):
 @throttle_classes([IpThrottle])
 def single_user_information(request, id):
     if request.method == 'GET':
-        try:
+         try:
             user = Client.objects.get(id=id)
             serialized_user = UserSerializer(user).data
             token = Token.objects.get(user=user)
             serialized_user['token'] = token.key
             return Response(serialized_user)
-        except Client.DoesNotExist:
+         except Client.DoesNotExist:
             return Response({'ERROR': 'user does not exist.'}, status=status.HTTP_401_UNAUTHORIZED)
 
 @api_view(['GET'])
 @throttle_classes([IpThrottle])
 def banner_list(request):
     if request.method == 'GET':
-        data = Banner.objects.all()
+        data = Banners.objects.all()
         serializer = BannerSerializer(data, context={'request': request}, many=True)
         return Response(serializer.data)
 
@@ -142,7 +140,7 @@ def product_list(request):
         elif search:
             data = Product.objects.filter(Q(product_name__icontains=search), is_active=True)
         else:
-            data = Product.objects.filter(is_active=True)
+            data = Product.objects.filter(is_active=True).order_by('-is_vip')
         result_data = paginator.paginate_queryset(data, request)
         serializer = ProductSerializer(result_data, context={'request': request}, many=True)
         return paginator.get_paginated_response(serializer.data)
@@ -176,7 +174,7 @@ def products_by_category(request, id):
             elif search:
                 data = category.products.filter(Q(product_name__icontains=search), is_active=True)
             else:
-                data = category.products.filter(is_active=True)
+                data = category.products.filter(is_active=True).order_by('-is_vip')
             result_data = paginator.paginate_queryset(data, request)
             serializer = ProductSerializer(result_data, context={'request': request}, many=True)
             return paginator.get_paginated_response(serializer.data)
@@ -230,7 +228,7 @@ def products_by_user(request):
         else:
             return Response({'ERROR': 'this user is not active yet.'}, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['PATCH', 'DELETE'])
+@api_view(['PATCH', 'POST'])
 @throttle_classes([IpThrottle])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
@@ -245,10 +243,11 @@ def update_user_product(request, id):
             serializer.save()
             return Response({'SUCCESS': 'product updated successfully.'}, status=status.HTTP_200_OK)
         return Response(serializer.errors)
-    elif request.method == 'DELETE':
-        product.delete()
-        return Response({'SUCCESS': 'product deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
-
+    elif request.method == 'POST':
+        if product.product_adder == request.user:
+            product.delete()
+            return Response({'SUCCESS': 'product deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+        return Response({'ERROR': 'only user product can be delete.'})
 # Views for Dukan
 
 @api_view(['GET'])

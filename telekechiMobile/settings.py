@@ -20,7 +20,7 @@ SECRET_KEY = secret['SECRET_KEY']
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['telekechi.com.tm', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['telekechi.com.tm', '216.250.10.50', '127.0.0.1']
 
 
 # Application definition
@@ -86,12 +86,8 @@ WSGI_APPLICATION = 'telekechiMobile.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'telekechi_mobile',
-        'USER': 'postgres',
-        'PASSWORD': '1',
-        'HOST': 'localhost', #change with domain
-        'PORT': '5432'
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
@@ -137,7 +133,7 @@ STATIC_ROOT = BASE_DIR / 'adminfiles'
 # Settings for Media
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'mediafiles')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field

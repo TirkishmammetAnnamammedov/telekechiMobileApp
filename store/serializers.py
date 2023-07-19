@@ -25,7 +25,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 class BannerSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Banner
+        model = Banners
         fields = '__all__'
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -33,10 +33,11 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = ('id', 'category_name', 'category_image', 'joined_date')
 
-class ProductSerializer(serializers.ModelSerializer):
+class ProductSerializer(serializers.ModelSerializer): 
     class Meta:
         model = Product
         fields = ('id',
+                 'product_adder',
                  'product_name',
                  'product_price',
                  'product_image',
@@ -56,7 +57,8 @@ class ProductSerializer(serializers.ModelSerializer):
                  'is_active',
                  'joined_date', 
                  'product_category')
-
+        extra_kwargs = {'product_adder': {'required': False}}
+ 
 class DukanSerializer(serializers.ModelSerializer):
     class Meta:
         model = Dukan

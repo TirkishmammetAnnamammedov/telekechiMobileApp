@@ -2,6 +2,8 @@ from django.db import models
 from django.utils import timezone as tz
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.contrib.auth import get_user_model
+from PIL import Image
+from io import BytesIO
 
 class UserManager(BaseUserManager):
     def create_user(self, phone_number, password=None, **extra_fields):
@@ -39,13 +41,6 @@ class Client(AbstractBaseUser, PermissionsMixin):
     class Meta:
         verbose_name_plural = 'Users'
 
-class Banner(models.Model):
-    image = models.ImageField(upload_to='banners', blank=True, null=True)
-
-    class Meta:
-        verbose_name_plural = 'Banners'
-
-
 class Category(models.Model):
     category_name = models.CharField(max_length=30, unique=True)
     category_image = models.ImageField(upload_to='category', blank=True, null=True)
@@ -56,6 +51,13 @@ class Category(models.Model):
 
     class Meta:
         verbose_name_plural = 'Categories'
+
+class Banners(models.Model):
+    image = models.ImageField(upload_to='banners', blank=True, null=True)
+    category_id = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='banners')
+
+    class Meta:
+        verbose_name_plural = 'Banners'
 
 class Product(models.Model):
     product_adder = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='added_products', to_field='phone_number')
@@ -81,6 +83,20 @@ class Product(models.Model):
 
     def __str__(self):
         return self.product_name
+
+
+    def save(self, *args, **kwargs):
+        for field_name in ['product_image', 'product_image2', 'product_image3', 'product_image4', 'product_image5', 'product_image6', 'product_image7', 'product_image8']:
+            image_field = getattr(self, field_name)
+            if image_field and image_field.size > 1000000:
+                img = Image.open(image_field)
+                output_size = (3000, 1600)
+                img = img.resize(output_size)
+                buffer = BytesIO()
+                img.save(buffer, format='JPEG', quality=50)
+                buffer.seek(0)
+                image_field.file = buffer
+        super(Product, self).save(*args, **kwargs)
         
     class Meta:
         verbose_name_plural = 'Products'
